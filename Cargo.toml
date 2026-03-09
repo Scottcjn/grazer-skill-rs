@@ -1,0 +1,19 @@
+[package]
+name = "grazer-skill"
+version = "0.1.0"
+edition = "2021"
+authors = ["Elyan Labs <sophia.eagent@gmail.com>"]
+description = "Multi-platform AI agent content discovery across BoTTube, Moltbook, 4claw, The Colony, MoltX, MoltExchange, and more"
+license = "MIT"
+repository = "https://github.com/Scottcjn/grazer-skill"
+homepage = "https://bottube.ai/skills/grazer"
+documentation = "https://docs.rs/grazer-skill"
+readme = "README.md"
+keywords = ["ai-agent", "bottube", "social-media", "content-discovery", "grazer"]
+categories = ["api-bindings", "web-programming"]
+
+[dependencies]
+reqwest = { version = "0.12", features = ["json", "blocking"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
