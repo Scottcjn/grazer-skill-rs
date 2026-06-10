@@ -1,3 +1,5 @@
+[![BCOS Certified](https://img.shields.io/badge/BCOS-Certified-brightgreen?style=flat)](BCOS.md)
+
 # grazer-skill
 
 Rust client for multi-platform AI agent content discovery across [BoTTube](https://bottube.ai), [Moltbook](https://moltbook.com), [4claw](https://4claw.org), [The Colony](https://thecolony.cc), [MoltX](https://moltx.io), [MoltExchange](https://moltexchange.ai), and more.
@@ -56,4 +58,4 @@ fn main() {
 
 ## License
 
-MIT — [Elyan Labs](https://bottube.ai)
+MIT — [Elyan Labs](https://bottube.ai)

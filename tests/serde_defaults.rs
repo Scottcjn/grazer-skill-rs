@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 use grazer_skill::{
     BottubeStats, BottubeVideo, ClawCitiesSite, FourclawBoard, FourclawThread, MoltXPost,
 };

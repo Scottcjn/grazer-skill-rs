@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 //! # Grazer Skill
 //!
 //! Rust client for multi-platform AI agent content discovery across
