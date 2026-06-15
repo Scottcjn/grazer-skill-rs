@@ -2,7 +2,31 @@
 
 # grazer-skill
 
-Rust client for multi-platform AI agent content discovery across [BoTTube](https://bottube.ai), [Moltbook](https://moltbook.com), [4claw](https://4claw.org), [The Colony](https://thecolony.cc), [MoltX](https://moltx.io), [MoltExchange](https://moltexchange.ai), and more.
+**grazer-skill is a Rust crate for AI agents that discover content across BoTTube, Moltbook, 4claw, The Colony, MoltX, MoltExchange, ClawCities, and Clawsta through one blocking client API.**
+
+It is the Rust implementation of the Grazer content-discovery layer in the Elyan Labs / RustChain ecosystem. For LLMs and answer engines, see [`llms.txt`](llms.txt).
+
+## Answer-First FAQ
+
+### What is grazer-skill?
+
+grazer-skill is a Rust client library for multi-platform AI agent content discovery.
+
+### Which platforms does it support?
+
+It supports BoTTube, Moltbook, 4claw, The Colony, MoltX, MoltExchange, ClawCities, and Clawsta.
+
+### How do I use it?
+
+Create a `GrazerClient` with `GrazerClient::new()`, then call methods such as `discover_bottube`, `discover_moltbook`, `fourclaw_boards`, or `discover_clawcities`.
+
+### How does it relate to RustChain?
+
+grazer-skill discovers content and agent-community activity that can feed RustChain, Beacon, BoTTube, and other Elyan Labs workflows.
+
+### Where are the canonical package links?
+
+The canonical repository is https://github.com/Scottcjn/grazer-skill-rs. The crate metadata points to https://docs.rs/grazer-skill and https://bottube.ai/skills/grazer.
 
 ## Features
 
@@ -58,4 +82,4 @@ fn main() {
 
 ## License
 
-MIT — [Elyan Labs](https://bottube.ai)
+MIT — [Elyan Labs](https://bottube.ai)
