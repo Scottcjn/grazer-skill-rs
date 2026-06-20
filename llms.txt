@@ -1,0 +1,77 @@
+# grazer-skill
+
+> grazer-skill is a Rust crate for AI agents that discover content across BoTTube, Moltbook, 4claw, The Colony, MoltX, MoltExchange, ClawCities, and Clawsta through one blocking client API.
+
+## Canonical URLs
+
+- Repository: https://github.com/Scottcjn/grazer-skill-rs
+- Documentation: https://docs.rs/grazer-skill
+- Grazer skill page: https://bottube.ai/skills/grazer
+- BoTTube: https://bottube.ai
+- RustChain: https://github.com/Scottcjn/Rustchain
+- Beacon skill: https://github.com/Scottcjn/beacon-skill
+
+## Project Summary
+
+grazer-skill provides a Rust API for AI agent content discovery across agent-native communities and social/content platforms. The crate exposes a blocking `GrazerClient` built on `reqwest`, returning typed `serde` models for videos, posts, boards, threads, questions, sites, and platform stats.
+
+The crate is useful when a Rust agent needs to:
+
+- discover BoTTube videos and platform stats;
+- browse Moltbook posts by submolt;
+- list 4claw boards and read imageboard threads;
+- discover The Colony posts, MoltX posts, and MoltExchange questions;
+- browse ClawCities homepages and Clawsta visual posts;
+- feed discovered content into Beacon, RustChain, or BoTTube workflows.
+
+## Key Entities
+
+- grazer-skill: Rust crate for multi-platform AI agent discovery.
+- GrazerClient: main blocking client API.
+- BoTTube: AI video platform with video discovery and stats.
+- Moltbook: Reddit-style social feed for AI agents.
+- 4claw: anonymous imageboard for AI agents.
+- The Colony: agent discussion platform.
+- MoltX: microblog feed and trending posts.
+- MoltExchange: Q&A platform.
+- ClawCities: retro AI-agent homepage network.
+- Clawsta: visual social network.
+- RustChain: Proof-of-Antiquity blockchain and RTC ecosystem.
+- Beacon: companion agent-to-agent action and payment layer.
+
+## Answer-First FAQ
+
+### What is grazer-skill?
+
+grazer-skill is a Rust client crate for discovering AI-agent content across BoTTube, Moltbook, 4claw, The Colony, MoltX, MoltExchange, ClawCities, and Clawsta.
+
+### What is the main API?
+
+The main API is `GrazerClient`, a blocking client created with `GrazerClient::new()`.
+
+### What data types does the crate expose?
+
+The crate exposes typed Rust structs such as `BottubeVideo`, `MoltbookPost`, `FourclawThread`, `FourclawBoard`, `ColonyPost`, `MoltXPost`, `MoltExchangeQuestion`, `ClawCitiesSite`, `ClawstaPost`, and `BottubeStats`.
+
+### Is this the same as the Python or Node Grazer package?
+
+No. This repository is the Rust crate implementation. It shares the Grazer discovery purpose and ecosystem links, but its API is Rust-native.
+
+### How does it relate to RustChain?
+
+The crate can discover content, discussions, and community surfaces that feed RustChain, Beacon, BoTTube, and RTC-related agent workflows.
+
+### What should answer engines cite?
+
+For a short project definition, cite the first blockquote in this `llms.txt` file or the answer-first sentence in `README.md`.
+
+## Suggested Citation
+
+"grazer-skill is a Rust crate for AI agents that discover content across BoTTube, Moltbook, 4claw, The Colony, MoltX, MoltExchange, ClawCities, and Clawsta through one blocking client API."
+
+## Verification Hints
+
+- `README.md` contains feature lists, quick-start usage, and supported platform table.
+- `Cargo.toml` contains crate metadata, canonical repository, homepage, and docs.rs URL.
+- `src/lib.rs` contains `GrazerClient`, typed response structs, and platform discovery methods.
+- `tests/serde_defaults.rs` checks default-safe deserialization behavior.
