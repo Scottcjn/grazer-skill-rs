@@ -239,27 +239,33 @@ impl GrazerClient {
         agent: Option<&str>,
         limit: Option<u32>,
     ) -> Result<Vec<BottubeVideo>> {
-        let mut url = "https://bottube.ai/api/videos?".to_string();
+        let limit = limit.unwrap_or(20).to_string();
+        let mut params: Vec<(&str, &str)> = vec![("limit", limit.as_str())];
         if let Some(cat) = category {
-            url.push_str(&format!("category={cat}&"));
+            params.push(("category", cat));
         }
         if let Some(ag) = agent {
-            url.push_str(&format!("agent={ag}&"));
+            params.push(("agent", ag));
         }
-        url.push_str(&format!("limit={}", limit.unwrap_or(20)));
 
-        let resp: Vec<BottubeVideo> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<BottubeVideo> = self
+            .http
+            .get("https://bottube.ai/api/videos")
+            .query(&params)
+            .send()?
+            .json()?;
         Ok(resp)
     }
 
     /// Search BoTTube videos by query.
     pub fn search_bottube(&self, query: &str, limit: Option<u32>) -> Result<Vec<BottubeVideo>> {
-        let url = format!(
-            "https://bottube.ai/api/videos/search?q={}&limit={}",
-            query,
-            limit.unwrap_or(20)
-        );
-        let resp: Vec<BottubeVideo> = self.http.get(&url).send()?.json()?;
+        let limit = limit.unwrap_or(20).to_string();
+        let resp: Vec<BottubeVideo> = self
+            .http
+            .get("https://bottube.ai/api/videos/search")
+            .query(&[("q", query), ("limit", limit.as_str())])
+            .send()?
+            .json()?;
         Ok(resp)
     }
 
@@ -277,13 +283,18 @@ impl GrazerClient {
         submolt: Option<&str>,
         limit: Option<u32>,
     ) -> Result<Vec<MoltbookPost>> {
-        let mut url = "https://www.moltbook.com/api/v1/posts?".to_string();
+        let limit = limit.unwrap_or(20).to_string();
+        let mut params: Vec<(&str, &str)> = vec![("limit", limit.as_str())];
         if let Some(s) = submolt {
-            url.push_str(&format!("submolt={s}&"));
+            params.push(("submolt", s));
         }
-        url.push_str(&format!("limit={}", limit.unwrap_or(20)));
 
-        let resp: Vec<MoltbookPost> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<MoltbookPost> = self
+            .http
+            .get("https://www.moltbook.com/api/v1/posts")
+            .query(&params)
+            .send()?
+            .json()?;
         Ok(resp)
     }
 
@@ -329,13 +340,18 @@ impl GrazerClient {
         colony: Option<&str>,
         limit: Option<u32>,
     ) -> Result<Vec<ColonyPost>> {
-        let mut url = "https://thecolony.cc/api/v1/posts?".to_string();
+        let limit = limit.unwrap_or(20).to_string();
+        let mut params: Vec<(&str, &str)> = vec![("limit", limit.as_str())];
         if let Some(c) = colony {
-            url.push_str(&format!("colony={c}&"));
+            params.push(("colony", c));
         }
-        url.push_str(&format!("limit={}", limit.unwrap_or(20)));
 
-        let resp: Vec<ColonyPost> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<ColonyPost> = self
+            .http
+            .get("https://thecolony.cc/api/v1/posts")
+            .query(&params)
+            .send()?
+            .json()?;
         Ok(resp)
     }
 
