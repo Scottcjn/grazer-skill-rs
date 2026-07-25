@@ -38,7 +38,7 @@
 //! | Clawsta | Visual | `discover_clawsta` |
 
 use reqwest::blocking::Client;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 /// Errors returned by the Grazer client.
 #[derive(Debug, thiserror::Error)]
@@ -230,6 +230,10 @@ impl GrazerClient {
         }
     }
 
+    fn get_json<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
+        Ok(self.http.get(url).send()?.error_for_status()?.json()?)
+    }
+
     // ── BoTTube ─────────────────────────────────────────────────
 
     /// Discover videos on BoTTube.
@@ -248,7 +252,7 @@ impl GrazerClient {
         }
         url.push_str(&format!("limit={}", limit.unwrap_or(20)));
 
-        let resp: Vec<BottubeVideo> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<BottubeVideo> = self.get_json(&url)?;
         Ok(resp)
     }
 
@@ -259,13 +263,13 @@ impl GrazerClient {
             query,
             limit.unwrap_or(20)
         );
-        let resp: Vec<BottubeVideo> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<BottubeVideo> = self.get_json(&url)?;
         Ok(resp)
     }
 
     /// Get BoTTube platform statistics.
     pub fn bottube_stats(&self) -> Result<BottubeStats> {
-        let resp: BottubeStats = self.http.get("https://bottube.ai/api/stats").send()?.json()?;
+        let resp: BottubeStats = self.get_json("https://bottube.ai/api/stats")?;
         Ok(resp)
     }
 
@@ -283,7 +287,7 @@ impl GrazerClient {
         }
         url.push_str(&format!("limit={}", limit.unwrap_or(20)));
 
-        let resp: Vec<MoltbookPost> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<MoltbookPost> = self.get_json(&url)?;
         Ok(resp)
     }
 
@@ -291,11 +295,7 @@ impl GrazerClient {
 
     /// List all 4claw boards.
     pub fn fourclaw_boards(&self) -> Result<Vec<FourclawBoard>> {
-        let resp: Vec<FourclawBoard> = self
-            .http
-            .get("https://www.4claw.org/api/v1/boards")
-            .send()?
-            .json()?;
+        let resp: Vec<FourclawBoard> = self.get_json("https://www.4claw.org/api/v1/boards")?;
         Ok(resp)
     }
 
@@ -310,14 +310,14 @@ impl GrazerClient {
             "https://www.4claw.org/api/v1/boards/{board}/threads?limit={}",
             limit.unwrap_or(20).min(20)
         );
-        let resp: Vec<FourclawThread> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<FourclawThread> = self.get_json(&url)?;
         Ok(resp)
     }
 
     /// Get a specific 4claw thread with replies.
     pub fn fourclaw_thread(&self, thread_id: &str) -> Result<serde_json::Value> {
         let url = format!("https://www.4claw.org/api/v1/threads/{thread_id}");
-        let resp: serde_json::Value = self.http.get(&url).send()?.json()?;
+        let resp: serde_json::Value = self.get_json(&url)?;
         Ok(resp)
     }
 
@@ -335,7 +335,7 @@ impl GrazerClient {
         }
         url.push_str(&format!("limit={}", limit.unwrap_or(20)));
 
-        let resp: Vec<ColonyPost> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<ColonyPost> = self.get_json(&url)?;
         Ok(resp)
     }
 
@@ -347,7 +347,7 @@ impl GrazerClient {
             "https://moltx.io/v1/posts?limit={}",
             limit.unwrap_or(20)
         );
-        let resp: Vec<MoltXPost> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<MoltXPost> = self.get_json(&url)?;
         Ok(resp)
     }
 
@@ -357,7 +357,7 @@ impl GrazerClient {
             "https://moltx.io/v1/posts/trending?limit={}",
             limit.unwrap_or(20)
         );
-        let resp: Vec<MoltXPost> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<MoltXPost> = self.get_json(&url)?;
         Ok(resp)
     }
 
@@ -372,7 +372,7 @@ impl GrazerClient {
             "https://moltexchange.ai/v1/questions?limit={}",
             limit.unwrap_or(20)
         );
-        let resp: Vec<MoltExchangeQuestion> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<MoltExchangeQuestion> = self.get_json(&url)?;
         Ok(resp)
     }
 
@@ -384,7 +384,7 @@ impl GrazerClient {
             "https://clawcities.com/api/v1/sites?limit={}",
             limit.unwrap_or(20)
         );
-        let resp: Vec<ClawCitiesSite> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<ClawCitiesSite> = self.get_json(&url)?;
         Ok(resp)
     }
 
@@ -396,7 +396,7 @@ impl GrazerClient {
             "https://clawsta.io/v1/posts?limit={}",
             limit.unwrap_or(20)
         );
-        let resp: Vec<ClawstaPost> = self.http.get(&url).send()?.json()?;
+        let resp: Vec<ClawstaPost> = self.get_json(&url)?;
         Ok(resp)
     }
 }
@@ -419,5 +419,72 @@ mod tests {
     #[test]
     fn test_default_impl() {
         let _client = GrazerClient::default();
+    }
+
+    fn assert_http_status<T: std::fmt::Debug>(result: Result<T>, expected: reqwest::StatusCode) {
+        match result {
+            Err(GrazerError::Http(error)) => {
+                assert_eq!(
+                    error.status(),
+                    Some(expected),
+                    "unexpected error: {error:?}"
+                );
+            }
+            other => panic!("expected HTTP {expected} error, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn get_json_preserves_404_status_before_decoding() {
+        let mut server = mockito::Server::new();
+        let request = server
+            .mock("GET", "/missing")
+            .with_status(404)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"error":"not found"}"#)
+            .create();
+        let client = GrazerClient::new();
+
+        let result: Result<serde_json::Value> =
+            client.get_json(&format!("{}/missing", server.url()));
+
+        request.assert();
+        assert_http_status(result, reqwest::StatusCode::NOT_FOUND);
+    }
+
+    #[test]
+    fn get_json_preserves_500_status_before_malformed_json() {
+        let mut server = mockito::Server::new();
+        let request = server
+            .mock("GET", "/broken")
+            .with_status(500)
+            .with_body("not json")
+            .create();
+        let client = GrazerClient::new();
+
+        let result: Result<serde_json::Value> =
+            client.get_json(&format!("{}/broken", server.url()));
+
+        request.assert();
+        assert_http_status(result, reqwest::StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    #[test]
+    fn get_json_decodes_successful_json() {
+        let mut server = mockito::Server::new();
+        let request = server
+            .mock("GET", "/ok")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"ok":true}"#)
+            .create();
+        let client = GrazerClient::new();
+
+        let value: serde_json::Value = client
+            .get_json(&format!("{}/ok", server.url()))
+            .expect("successful JSON response should decode");
+
+        request.assert();
+        assert_eq!(value, serde_json::json!({"ok": true}));
     }
 }
