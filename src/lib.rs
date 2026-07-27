@@ -234,6 +234,21 @@ impl GrazerClient {
         Ok(self.http.get(url).send()?.error_for_status()?.json()?)
     }
 
+    /// Same contract as `get_json`, but lets reqwest build the query string
+    /// so every value gets percent-encoded. Hand-built `format!("...{v}...")`
+    /// query strings break on any value containing a reserved character
+    /// (`&`, `#`, `+`, `=`, space): the embedded delimiter gets read as a
+    /// parameter separator by the server instead of as data.
+    fn get_json_query<T: DeserializeOwned>(&self, url: &str, params: &[(&str, String)]) -> Result<T> {
+        Ok(self
+            .http
+            .get(url)
+            .query(params)
+            .send()?
+            .error_for_status()?
+            .json()?)
+    }
+
     // ── BoTTube ─────────────────────────────────────────────────
 
     /// Discover videos on BoTTube.
@@ -243,27 +258,28 @@ impl GrazerClient {
         agent: Option<&str>,
         limit: Option<u32>,
     ) -> Result<Vec<BottubeVideo>> {
-        let mut url = "https://bottube.ai/api/videos?".to_string();
+        let mut params: Vec<(&str, String)> = Vec::new();
         if let Some(cat) = category {
-            url.push_str(&format!("category={cat}&"));
+            params.push(("category", cat.to_string()));
         }
         if let Some(ag) = agent {
-            url.push_str(&format!("agent={ag}&"));
+            params.push(("agent", ag.to_string()));
         }
-        url.push_str(&format!("limit={}", limit.unwrap_or(20)));
+        params.push(("limit", limit.unwrap_or(20).to_string()));
 
-        let resp: Vec<BottubeVideo> = self.get_json(&url)?;
+        let resp: Vec<BottubeVideo> =
+            self.get_json_query("https://bottube.ai/api/videos", &params)?;
         Ok(resp)
     }
 
     /// Search BoTTube videos by query.
     pub fn search_bottube(&self, query: &str, limit: Option<u32>) -> Result<Vec<BottubeVideo>> {
-        let url = format!(
-            "https://bottube.ai/api/videos/search?q={}&limit={}",
-            query,
-            limit.unwrap_or(20)
-        );
-        let resp: Vec<BottubeVideo> = self.get_json(&url)?;
+        let params = [
+            ("q", query.to_string()),
+            ("limit", limit.unwrap_or(20).to_string()),
+        ];
+        let resp: Vec<BottubeVideo> =
+            self.get_json_query("https://bottube.ai/api/videos/search", &params)?;
         Ok(resp)
     }
 
@@ -281,13 +297,14 @@ impl GrazerClient {
         submolt: Option<&str>,
         limit: Option<u32>,
     ) -> Result<Vec<MoltbookPost>> {
-        let mut url = "https://www.moltbook.com/api/v1/posts?".to_string();
+        let mut params: Vec<(&str, String)> = Vec::new();
         if let Some(s) = submolt {
-            url.push_str(&format!("submolt={s}&"));
+            params.push(("submolt", s.to_string()));
         }
-        url.push_str(&format!("limit={}", limit.unwrap_or(20)));
+        params.push(("limit", limit.unwrap_or(20).to_string()));
 
-        let resp: Vec<MoltbookPost> = self.get_json(&url)?;
+        let resp: Vec<MoltbookPost> =
+            self.get_json_query("https://www.moltbook.com/api/v1/posts", &params)?;
         Ok(resp)
     }
 
@@ -329,13 +346,14 @@ impl GrazerClient {
         colony: Option<&str>,
         limit: Option<u32>,
     ) -> Result<Vec<ColonyPost>> {
-        let mut url = "https://thecolony.cc/api/v1/posts?".to_string();
+        let mut params: Vec<(&str, String)> = Vec::new();
         if let Some(c) = colony {
-            url.push_str(&format!("colony={c}&"));
+            params.push(("colony", c.to_string()));
         }
-        url.push_str(&format!("limit={}", limit.unwrap_or(20)));
+        params.push(("limit", limit.unwrap_or(20).to_string()));
 
-        let resp: Vec<ColonyPost> = self.get_json(&url)?;
+        let resp: Vec<ColonyPost> =
+            self.get_json_query("https://thecolony.cc/api/v1/posts", &params)?;
         Ok(resp)
     }
 
@@ -486,5 +504,57 @@ mod tests {
 
         request.assert();
         assert_eq!(value, serde_json::json!({"ok": true}));
+    }
+
+    #[test]
+    fn get_json_query_percent_encodes_reserved_characters() {
+        // A value containing '&' built into a hand-written format!() query
+        // string ("q={query}&limit=20") would be read by the server as a
+        // second parameter, truncating the real query. reqwest's .query()
+        // must percent-encode it so the server sees the literal value.
+        let mut server = mockito::Server::new();
+        let request = server
+            .mock("GET", "/search")
+            .match_query(mockito::Matcher::UrlEncoded(
+                "q".into(),
+                "rust & go".into(),
+            ))
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"ok":true}"#)
+            .create();
+        let client = GrazerClient::new();
+
+        let params = [("q", "rust & go".to_string())];
+        let value: serde_json::Value = client
+            .get_json_query(&format!("{}/search", server.url()), &params)
+            .expect("percent-encoded query should reach the mock");
+
+        request.assert();
+        assert_eq!(value, serde_json::json!({"ok": true}));
+    }
+
+    #[test]
+    fn get_json_query_preserves_error_status_before_decoding() {
+        // Same error_for_status()-before-json() contract as get_json above,
+        // just through the query-building path -- the percent-encoding fix
+        // must not reintroduce the "decode the error body as the success
+        // type" bug that get_json (#17) already closed.
+        let mut server = mockito::Server::new();
+        let request = server
+            .mock("GET", "/search")
+            .match_query(mockito::Matcher::Any)
+            .with_status(404)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"error":"not found"}"#)
+            .create();
+        let client = GrazerClient::new();
+
+        let params = [("q", "anything".to_string())];
+        let result: Result<serde_json::Value> =
+            client.get_json_query(&format!("{}/search", server.url()), &params);
+
+        request.assert();
+        assert_http_status(result, reqwest::StatusCode::NOT_FOUND);
     }
 }
